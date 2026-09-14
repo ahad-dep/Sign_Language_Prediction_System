@@ -1,0 +1,7 @@
+Flask
+opencv-python
+mediapipe==0.10.21
+numpy
+pandas
+tensorflow==2.18.0
+protobuf==4.25.3

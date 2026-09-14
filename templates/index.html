@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SignAI | Sign Language Prediction</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Background Effects -->
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+
+        <div class="logo">
+            <span>✋</span> Sign<span>AI</span>
+        </div>
+
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#about">About</a>
+            <a href="#features">Features</a>
+        </div>
+
+        <div class="ai-status">
+            <span class="status-dot"></span>
+            AI ONLINE
+        </div>
+
+    </nav>
+
+
+    <!-- Hero Section -->
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <div class="badge">
+                ✨ AI POWERED SIGN RECOGNITION
+            </div>
+
+            <h1>
+                Turn Your
+                <span>Signs</span>
+                Into Words.
+            </h1>
+
+            <p>
+                An intelligent computer vision system that understands
+                hand gestures and converts sign language into readable text
+                in real time.
+            </p>
+
+            <div class="buttons">
+
+                <a href="/prediction" class="primary-btn">
+                    Start Prediction →
+                </a>
+
+                <a href="#about" class="secondary-btn">
+                    Learn More
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- AI Visual Card -->
+        <div class="hero-card">
+
+            <div class="card-header">
+
+                <span>
+                    <span class="live-dot"></span>
+                    LIVE AI VISION
+                </span>
+
+                <span>● ● ●</span>
+
+            </div>
+
+            <div class="hand-display">
+
+                <div class="scan-line"></div>
+
+                <div class="hand-icon">
+                    ✋
+                </div>
+
+                <div class="corner top-left"></div>
+                <div class="corner top-right"></div>
+                <div class="corner bottom-left"></div>
+                <div class="corner bottom-right"></div>
+
+            </div>
+
+            <div class="prediction-box">
+
+                <div>
+                    <small>PREDICTED SIGN</small>
+                    <h2>A</h2>
+                </div>
+
+                <div class="confidence">
+
+                    <small>CONFIDENCE</small>
+
+                    <strong>96%</strong>
+
+                    <div class="progress">
+                        <div></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- Statistics -->
+    <section class="stats">
+
+        <div class="stat-card">
+            <h2>26+</h2>
+            <p>Signs Supported</p>
+        </div>
+
+        <div class="stat-card">
+            <h2>96%</h2>
+            <p>AI Confidence</p>
+        </div>
+
+        <div class="stat-card">
+            <h2>⚡</h2>
+            <p>Real-Time Detection</p>
+        </div>
+
+        <div class="stat-card">
+            <h2>AI</h2>
+            <p>Computer Vision</p>
+        </div>
+
+    </section>
+
+
+    <!-- About -->
+    <section class="about" id="about">
+
+        <div class="section-title">
+
+            <span>ABOUT THE PROJECT</span>
+
+            <h2>
+                Communication Without
+                <span>Barriers.</span>
+            </h2>
+
+            <p>
+                SignAI uses Artificial Intelligence, Computer Vision
+                and Machine Learning to recognize hand gestures and
+                convert them into meaningful text.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Features -->
+    <section class="features" id="features">
+
+        <div class="feature-card">
+
+            <div class="feature-icon">📷</div>
+
+            <h3>Live Detection</h3>
+
+            <p>
+                Detect hand gestures directly through your webcam
+                in real time.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">🧠</div>
+
+            <h3>AI Prediction</h3>
+
+            <p>
+                Machine learning analyzes the gesture and predicts
+                the corresponding sign.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">⚡</div>
+
+            <h3>Instant Results</h3>
+
+            <p>
+                Get the predicted alphabet or sign instantly
+                on your screen.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Footer -->
+    <footer>
+
+        <div class="logo">
+            ✋ Sign<span>AI</span>
+        </div>
+
+        <p>
+            AI Based Sign Language Prediction System
+        </p>
+
+        <p class="copyright">
+            © 2026 SignAI | Mini Project
+        </p>
+
+    </footer>
+
+</body>
+
+</html>

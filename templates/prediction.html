@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>SignAI | Prediction</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+
+        .prediction-page {
+            min-height: 100vh;
+            padding: 40px 8%;
+        }
+
+        .prediction-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .camera-section {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 25px;
+            margin-top: 35px;
+        }
+
+        .camera-card,
+        .result-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            padding: 22px;
+            backdrop-filter: blur(15px);
+        }
+
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .camera-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .live-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .live-dot {
+            width: 9px;
+            height: 9px;
+            background: #00ff88;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 12px #00ff88;
+        }
+
+        .camera-frame {
+            width: 100%;
+            border-radius: 18px;
+            overflow: hidden;
+            background: #080812;
+            min-height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-frame img {
+            width: 100%;
+            display: block;
+            border-radius: 18px;
+        }
+
+        .result-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .result-label {
+            font-size: 12px;
+            letter-spacing: 2px;
+            opacity: 0.65;
+            margin-bottom: 10px;
+        }
+
+        .prediction-letter {
+            font-size: 100px;
+            font-weight: 800;
+            text-align: center;
+            margin: 10px 0 25px;
+
+            background: linear-gradient(
+                135deg,
+                #9b5cff,
+                #35c8ff
+            );
+
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .confidence-title {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 20px;
+
+            background: linear-gradient(
+                90deg,
+                #8b5cf6,
+                #22d3ee
+            );
+
+            transition: width 0.3s ease;
+        }
+
+        .history {
+            margin-top: 25px;
+        }
+
+        .history-title {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .history-item {
+            min-width: 38px;
+            height: 38px;
+            padding: 0 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.08);
+            font-weight: 700;
+        }
+
+        .info-text {
+            text-align: center;
+            margin-top: 20px;
+            opacity: 0.6;
+            font-size: 13px;
+        }
+
+        @media (max-width: 850px) {
+
+            .camera-section {
+                grid-template-columns: 1fr;
+            }
+
+            .prediction-letter {
+                font-size: 80px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            ✋ Sign<span>AI</span>
+        </div>
+
+        <a href="/" class="secondary-btn">
+            ← Home
+        </a>
+
+    </nav>
+
+
+    <!-- MAIN -->
+
+    <section class="prediction-page">
+
+        <div class="prediction-container">
+
+
+            <!-- TITLE -->
+
+            <div class="hero-content">
+
+                <div class="badge">
+                    🧠 AI PREDICTION MODE
+                </div>
+
+                <h1>
+                    Sign
+                    <span>Detection</span>
+                </h1>
+
+                <p>
+                    Show your hand gesture in front of the webcam.
+                    SignAI will detect and predict your sign in real time.
+                </p>
+
+            </div>
+
+
+            <!-- CAMERA + RESULT -->
+
+            <div class="camera-section">
+
+
+                <!-- CAMERA -->
+
+                <div class="camera-card">
+
+                    <div class="camera-header">
+
+                        <div class="camera-title">
+                            📷 Live AI Camera
+                        </div>
+
+                        <div class="live-status">
+
+                            <span class="live-dot"></span>
+
+                            LIVE
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="camera-frame">
+
+                        <img
+                            src="{{ url_for('video_feed') }}"
+                            alt="Live Sign Language Camera"
+                        >
+
+                    </div>
+
+
+                    <div class="info-text">
+
+                        ✋ Place your hand clearly inside the camera view
+
+                    </div>
+
+                </div>
+
+
+                <!-- RESULT -->
+
+                <div class="result-card">
+
+                    <div class="result-label">
+                        CURRENT PREDICTION
+                    </div>
+
+
+                    <div
+                        id="predictionLetter"
+                        class="prediction-letter"
+                    >
+                        --
+                    </div>
+
+
+                    <div class="confidence-title">
+
+                        <span>
+                            AI Confidence
+                        </span>
+
+                        <strong id="confidenceText">
+                            0%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="confidence-bar">
+
+                        <div
+                            id="confidenceFill"
+                            class="confidence-fill"
+                        >
+                        </div>
+
+                    </div>
+
+
+                    <!-- HISTORY -->
+
+                    <div class="history">
+
+                        <div class="history-title">
+                            Prediction History
+                        </div>
+
+                        <div
+                            id="historyList"
+                            class="history-list"
+                        >
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- JAVASCRIPT -->
+
+    <script>
+
+        let lastPrediction = "";
+        let history = [];
+
+
+        async function updatePrediction() {
+
+            try {
+
+                const response =
+                    await fetch("/prediction_data");
+
+                const data =
+                    await response.json();
+
+
+                const prediction =
+                    data.prediction;
+
+                const confidence =
+                    data.confidence;
+
+
+                // Update prediction
+
+                document.getElementById(
+                    "predictionLetter"
+                ).textContent = prediction;
+
+
+                // Update confidence
+
+                document.getElementById(
+                    "confidenceText"
+                ).textContent =
+                    confidence.toFixed(2) + "%";
+
+
+                // Update confidence bar
+
+                document.getElementById(
+                    "confidenceFill"
+                ).style.width =
+                    confidence + "%";
+
+
+                // Add to history
+
+                if (
+                    prediction !== "--" &&
+                    prediction !== lastPrediction
+                ) {
+
+                    history.push(prediction);
+
+                    if (history.length > 12) {
+                        history.shift();
+                    }
+
+                    updateHistory();
+
+                    lastPrediction = prediction;
+
+                }
+
+            }
+
+            catch (error) {
+
+                console.log(
+                    "Prediction error:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        function updateHistory() {
+
+            const historyList =
+                document.getElementById(
+                    "historyList"
+                );
+
+
+            historyList.innerHTML = "";
+
+
+            history.forEach(
+                function(sign) {
+
+                    const item =
+                        document.createElement("div");
+
+                    item.className =
+                        "history-item";
+
+                    item.textContent =
+                        sign;
+
+                    historyList.appendChild(
+                        item
+                    );
+
+                }
+            );
+
+        }
+
+
+        // Update every 300 milliseconds
+
+        setInterval(
+            updatePrediction,
+            300
+        );
+
+
+        // First update
+
+        updatePrediction();
+
+    </script>
+
+
+</body>
+
+</html>

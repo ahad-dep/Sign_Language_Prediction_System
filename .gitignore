@@ -1,0 +1,7 @@
+venv/
+venvpip/
+.vscode/
+__pycache__/
+*.pyc
+install/
+dataset/
