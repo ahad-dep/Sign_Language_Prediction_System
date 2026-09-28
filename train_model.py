@@ -3,10 +3,11 @@ import random
 import pandas as pd
 import tensorflow as tf
 
+# ============================================================
+# SIGN LANGUAGE AI - IMPROVED MODEL TRAINING
+# ============================================================
 
-# --------------------------------------------------
-# SETTINGS
-# --------------------------------------------------
+# ---------------- SETTINGS ----------------
 
 DATASET_PATH = "dataset/asl_alphabet_train/asl_alphabet_train"
 
@@ -14,46 +15,42 @@ MODEL_PATH = "model/sign_language_model.keras"
 
 CLASS_NAMES_PATH = "model/class_names.txt"
 
-IMAGE_SIZE = 128
+IMAGE_SIZE = 160
 
 BATCH_SIZE = 32
 
-IMAGES_PER_CLASS = 300
+# More images = better learning
+IMAGES_PER_CLASS = 800
 
-EPOCHS = 10
+EPOCHS = 12
 
-
-# --------------------------------------------------
-# TENSORFLOW / KERAS
-# --------------------------------------------------
-
-ImageDataGenerator = tf.keras.preprocessing.image.ImageDataGenerator
-
-layers = tf.keras.layers
-
-models = tf.keras.models
+SEED = 42
 
 
-# --------------------------------------------------
-# CHECK DATASET
-# --------------------------------------------------
+# ---------------- CHECK DATASET ----------------
 
 if not os.path.exists(DATASET_PATH):
 
-    print("Dataset folder not found!")
+    print("ERROR: Dataset folder not found!")
 
-    print("\nExpected location:")
+    print()
+    print("Expected:")
     print(DATASET_PATH)
 
     exit()
 
 
+print()
+print("==========================================")
+print("   SIGN LANGUAGE AI MODEL TRAINING")
+print("==========================================")
+print()
+
 print("Dataset found!")
+print()
 
 
-# --------------------------------------------------
-# FIND CLASSES
-# --------------------------------------------------
+# ---------------- FIND CLASSES ----------------
 
 classes = sorted([
     folder
@@ -64,21 +61,24 @@ classes = sorted([
 ])
 
 
-print("\nClasses found:")
-
+print("Classes found:")
 print(classes)
+
+print()
+
+print("Number of classes:", len(classes))
+
+print()
 
 
 if len(classes) == 0:
 
-    print("\nNo classes found in dataset!")
+    print("ERROR: No classes found!")
 
     exit()
 
 
-# --------------------------------------------------
-# COLLECT IMAGES
-# --------------------------------------------------
+# ---------------- COLLECT IMAGES ----------------
 
 image_paths = []
 
@@ -100,14 +100,22 @@ for class_name in classes:
         )
     ]
 
-    # Shuffle images
+    random.seed(SEED)
+
     random.shuffle(files)
 
-    # Select limited number of images
-    files = files[:IMAGES_PER_CLASS]
+    selected_files = files[
+        :IMAGES_PER_CLASS
+    ]
 
 
-    for file in files:
+    print(
+        f"{class_name}: "
+        f"{len(selected_files)} images"
+    )
+
+
+    for file in selected_files:
 
         image_paths.append(
             os.path.join(
@@ -119,58 +127,73 @@ for class_name in classes:
         labels.append(class_name)
 
 
-print("\nTotal images selected:")
+print()
+
+print("Total images selected:")
 
 print(len(image_paths))
+
+print()
 
 
 if len(image_paths) == 0:
 
-    print("\nNo images found!")
-
-    print("Please check your dataset folder structure.")
+    print("ERROR: No images found!")
 
     exit()
 
 
-# --------------------------------------------------
-# CREATE DATAFRAME
-# --------------------------------------------------
+# ---------------- DATAFRAME ----------------
 
 data = pd.DataFrame({
+
     "filename": image_paths,
+
     "class": labels
+
 })
 
 
-print("\nDataframe created successfully.")
+print("Dataframe created successfully.")
+
+print()
 
 
-# --------------------------------------------------
-# IMAGE DATA GENERATOR
-# --------------------------------------------------
+# ============================================================
+# DATA AUGMENTATION
+# ============================================================
 
-datagen = ImageDataGenerator(
+datagen = tf.keras.preprocessing.image.ImageDataGenerator(
 
     rescale=1.0 / 255,
 
     validation_split=0.2,
 
-    rotation_range=10,
+    rotation_range=15,
 
-    width_shift_range=0.1,
+    width_shift_range=0.12,
 
-    height_shift_range=0.1,
+    height_shift_range=0.12,
 
-    zoom_range=0.1,
+    zoom_range=0.15,
 
-    horizontal_flip=False
+    shear_range=0.10,
+
+    brightness_range=[
+        0.8,
+        1.2
+    ],
+
+    horizontal_flip=True,
+
+    fill_mode="nearest"
+
 )
 
 
-# --------------------------------------------------
+# ============================================================
 # TRAINING DATA
-# --------------------------------------------------
+# ============================================================
 
 train_generator = datagen.flow_from_dataframe(
 
@@ -191,13 +214,16 @@ train_generator = datagen.flow_from_dataframe(
 
     subset="training",
 
-    shuffle=True
+    shuffle=True,
+
+    seed=SEED
+
 )
 
 
-# --------------------------------------------------
+# ============================================================
 # VALIDATION DATA
-# --------------------------------------------------
+# ============================================================
 
 validation_generator = datagen.flow_from_dataframe(
 
@@ -219,16 +245,48 @@ validation_generator = datagen.flow_from_dataframe(
     subset="validation",
 
     shuffle=False
+
 )
 
 
-# --------------------------------------------------
-# CREATE CNN MODEL
-# --------------------------------------------------
+# ============================================================
+# MOBILE NET V2
+# ============================================================
 
-model = models.Sequential([
+print()
 
-    layers.Input(
+print("Loading MobileNetV2 AI model...")
+
+print()
+
+
+base_model = tf.keras.applications.MobileNetV2(
+
+    input_shape=(
+        IMAGE_SIZE,
+        IMAGE_SIZE,
+        3
+    ),
+
+    include_top=False,
+
+    weights="imagenet"
+
+)
+
+
+# Freeze the original ImageNet layers
+
+base_model.trainable = False
+
+
+# ============================================================
+# CREATE MODEL
+# ============================================================
+
+model = tf.keras.Sequential([
+
+    tf.keras.layers.Input(
         shape=(
             IMAGE_SIZE,
             IMAGE_SIZE,
@@ -236,105 +294,113 @@ model = models.Sequential([
         )
     ),
 
-    # First Convolution Layer
-    layers.Conv2D(
-        32,
-        (3, 3),
+    base_model,
+
+    tf.keras.layers.GlobalAveragePooling2D(),
+
+    tf.keras.layers.BatchNormalization(),
+
+    tf.keras.layers.Dense(
+        256,
         activation="relu"
     ),
 
-    layers.MaxPooling2D(
-        (2, 2)
-    ),
+    tf.keras.layers.Dropout(0.4),
 
-
-    # Second Convolution Layer
-    layers.Conv2D(
-        64,
-        (3, 3),
-        activation="relu"
-    ),
-
-    layers.MaxPooling2D(
-        (2, 2)
-    ),
-
-
-    # Third Convolution Layer
-    layers.Conv2D(
-        128,
-        (3, 3),
-        activation="relu"
-    ),
-
-    layers.MaxPooling2D(
-        (2, 2)
-    ),
-
-
-    # Convert feature maps into vector
-    layers.Flatten(),
-
-
-    # Fully Connected Layer
-    layers.Dense(
-        128,
-        activation="relu"
-    ),
-
-
-    # Prevent overfitting
-    layers.Dropout(
-        0.5
-    ),
-
-
-    # Output Layer
-    layers.Dense(
+    tf.keras.layers.Dense(
         len(classes),
         activation="softmax"
     )
+
 ])
 
 
-# --------------------------------------------------
-# COMPILE MODEL
-# --------------------------------------------------
+# ============================================================
+# COMPILE
+# ============================================================
 
 model.compile(
 
-    optimizer="adam",
+    optimizer=tf.keras.optimizers.Adam(
+        learning_rate=0.0005
+    ),
 
     loss="categorical_crossentropy",
 
-    metrics=["accuracy"]
+    metrics=[
+        "accuracy"
+    ]
+
 )
 
 
-print("\nModel created successfully.")
+print()
 
+print("Model created successfully!")
 
-# --------------------------------------------------
-# SHOW MODEL
-# --------------------------------------------------
+print()
 
 model.summary()
 
 
-# --------------------------------------------------
+# ============================================================
+# CALLBACKS
+# ============================================================
+
+callbacks = [
+
+    tf.keras.callbacks.EarlyStopping(
+
+        monitor="val_accuracy",
+
+        patience=3,
+
+        restore_best_weights=True
+
+    ),
+
+    tf.keras.callbacks.ReduceLROnPlateau(
+
+        monitor="val_loss",
+
+        factor=0.5,
+
+        patience=2,
+
+        min_lr=0.00001
+
+    )
+
+]
+
+
+# ============================================================
 # START TRAINING
-# --------------------------------------------------
+# ============================================================
 
-print("\n======================================")
+print()
 
-print("STARTING SIGN LANGUAGE MODEL TRAINING")
+print("==========================================")
+print("       STARTING AI TRAINING")
+print("==========================================")
 
-print("======================================")
+print()
 
+print("Images:", len(image_paths))
 
-print("\nPlease wait...")
+print("Classes:", len(classes))
 
-print("Training may take some time.\n")
+print("Image size:", IMAGE_SIZE)
+
+print("Epochs:", EPOCHS)
+
+print()
+
+print("Training may take some time.")
+
+print("Please do not close VS Code.")
+
+print()
 
 
 history = model.fit(
@@ -343,13 +409,16 @@ history = model.fit(
 
     validation_data=validation_generator,
 
-    epochs=EPOCHS
+    epochs=EPOCHS,
+
+    callbacks=callbacks
+
 )
 
 
-# --------------------------------------------------
-# CREATE MODEL FOLDER
-# --------------------------------------------------
+# ============================================================
+# SAVE MODEL
+# ============================================================
 
 os.makedirs(
     "model",
@@ -357,18 +426,14 @@ os.makedirs(
 )
 
 
-# --------------------------------------------------
-# SAVE TRAINED MODEL
-# --------------------------------------------------
-
 model.save(
     MODEL_PATH
 )
 
 
-# --------------------------------------------------
+# ============================================================
 # SAVE CLASS NAMES
-# --------------------------------------------------
+# ============================================================
 
 with open(
     CLASS_NAMES_PATH,
@@ -382,27 +447,51 @@ with open(
         )
 
 
-# --------------------------------------------------
-# TRAINING COMPLETE
-# --------------------------------------------------
+# ============================================================
+# FINAL RESULT
+# ============================================================
 
-print("\n")
+final_accuracy = history.history[
+    "accuracy"
+][-1]
 
-print("======================================")
+final_val_accuracy = history.history[
+    "val_accuracy"
+][-1]
 
+
+print()
+
+print("==========================================")
 print("       TRAINING COMPLETE!")
+print("==========================================")
 
-print("======================================")
+print()
 
+print(
+    f"Training Accuracy: "
+    f"{final_accuracy * 100:.2f}%"
+)
 
-print("\nModel saved at:")
+print(
+    f"Validation Accuracy: "
+    f"{final_val_accuracy * 100:.2f}%"
+)
+
+print()
+
+print("Model saved at:")
 
 print(MODEL_PATH)
 
+print()
 
-print("\nClass names saved at:")
+print("Class names saved at:")
 
 print(CLASS_NAMES_PATH)
 
+print()
 
-print("\nYour AI model is ready! 🎉")
+print("Your improved AI model is ready!")
+
+print("==========================================")

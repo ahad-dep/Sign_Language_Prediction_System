@@ -29,7 +29,10 @@ latest_prediction = "--"
 latest_confidence = 0.0
 
 
-# MediaPipe
+# --------------------------------------------------
+# MEDIAPIPE
+# --------------------------------------------------
+
 mp_hands = mp.solutions.hands
 mp_draw = mp.solutions.drawing_utils
 
@@ -41,9 +44,23 @@ hands = mp_hands.Hands(
 )
 
 
-# Webcam
-camera = cv2.VideoCapture(0)
+# --------------------------------------------------
+# WEBCAM
+# --------------------------------------------------
 
+print("Opening webcam...")
+
+camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
+if not camera.isOpened():
+    print("ERROR: Could not open webcam.")
+else:
+    print("Webcam opened successfully!")
+
+
+# --------------------------------------------------
+# GENERATE VIDEO FRAMES
+# --------------------------------------------------
 
 def generate_frames():
 
@@ -55,11 +72,26 @@ def generate_frames():
         success, frame = camera.read()
 
         if not success:
-            break
 
+            print("ERROR: Could not read webcam frame.")
+
+            # Try reopening the camera
+            camera.release()
+
+            camera.open(0, cv2.CAP_DSHOW)
+
+            continue
+
+
+        # Mirror camera
         frame = cv2.flip(frame, 1)
 
         height, width, _ = frame.shape
+
+
+        # --------------------------------------------------
+        # MEDIAPIPE HAND DETECTION
+        # --------------------------------------------------
 
         rgb_frame = cv2.cvtColor(
             frame,
@@ -81,7 +113,10 @@ def generate_frames():
                 )
 
 
-                # Find hand coordinates
+                # --------------------------------------------------
+                # FIND HAND BOUNDING BOX
+                # --------------------------------------------------
+
                 x_coordinates = [
                     int(landmark.x * width)
                     for landmark in hand_landmarks.landmark
@@ -124,7 +159,10 @@ def generate_frames():
                 )
 
 
-                # Crop hand
+                # --------------------------------------------------
+                # CROP HAND
+                # --------------------------------------------------
+
                 hand_image = frame[
                     y_min:y_max,
                     x_min:x_max
@@ -142,7 +180,7 @@ def generate_frames():
                 )
 
 
-                # Convert BGR to RGB
+                # BGR -> RGB
                 hand_image = cv2.cvtColor(
                     hand_image,
                     cv2.COLOR_BGR2RGB
@@ -152,13 +190,18 @@ def generate_frames():
                 # Normalize
                 hand_image = hand_image / 255.0
 
+
+                # Add batch dimension
                 hand_image = np.expand_dims(
                     hand_image,
                     axis=0
                 )
 
 
-                # AI prediction
+                # --------------------------------------------------
+                # AI PREDICTION
+                # --------------------------------------------------
+
                 predictions = model.predict(
                     hand_image,
                     verbose=0
@@ -169,22 +212,29 @@ def generate_frames():
                     predictions[0]
                 )
 
+
                 confidence = (
                     predictions[0][predicted_index]
                     * 100
                 )
+
 
                 predicted_class = class_names[
                     predicted_index
                 ]
 
 
-                # Update latest result
+                # Update prediction
                 latest_prediction = predicted_class
-                latest_confidence = float(confidence)
+                latest_confidence = float(
+                    confidence
+                )
 
 
-                # Display on camera
+                # --------------------------------------------------
+                # DISPLAY PREDICTION
+                # --------------------------------------------------
+
                 cv2.putText(
                     frame,
                     f"Prediction: {predicted_class}",
@@ -223,23 +273,36 @@ def generate_frames():
             )
 
 
-        # Convert frame to JPEG
+        # --------------------------------------------------
+        # CONVERT FRAME TO JPEG
+        # --------------------------------------------------
+
         ret, buffer = cv2.imencode(
             ".jpg",
             frame
         )
 
-        frame = buffer.tobytes()
+        if not ret:
+            continue
+
+        frame_bytes = buffer.tobytes()
 
 
-        # Send frame to browser
+        # --------------------------------------------------
+        # SEND FRAME TO BROWSER
+        # --------------------------------------------------
+
         yield (
             b"--frame\r\n"
             b"Content-Type: image/jpeg\r\n\r\n"
-            + frame
+            + frame_bytes
             + b"\r\n"
         )
 
+
+# --------------------------------------------------
+# HOME PAGE
+# --------------------------------------------------
 
 @app.route("/")
 def home():
@@ -249,6 +312,10 @@ def home():
     )
 
 
+# --------------------------------------------------
+# PREDICTION PAGE
+# --------------------------------------------------
+
 @app.route("/prediction")
 def prediction():
 
@@ -256,6 +323,10 @@ def prediction():
         "prediction.html"
     )
 
+
+# --------------------------------------------------
+# VIDEO FEED
+# --------------------------------------------------
 
 @app.route("/video_feed")
 def video_feed():
@@ -265,6 +336,10 @@ def video_feed():
         mimetype="multipart/x-mixed-replace; boundary=frame"
     )
 
+
+# --------------------------------------------------
+# PREDICTION DATA
+# --------------------------------------------------
 
 @app.route("/prediction_data")
 def prediction_data():
@@ -278,9 +353,15 @@ def prediction_data():
     })
 
 
+# --------------------------------------------------
+# RUN FLASK
+# --------------------------------------------------
+
 if __name__ == "__main__":
 
     app.run(
+        host="0.0.0.0",
+        port=5000,
         debug=True,
         use_reloader=False
     )
